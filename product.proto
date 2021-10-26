@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option go_package = "grpc/proto";
+
+message Product {
+    string sku = 1;
+    string name = 2;
+    string description = 3;
+    string category = 4;
+    string brand = 5;
+    double price = 6;
+}
+
+message NewProduct {
+    string name = 1;
+    string description = 2;
+    string category = 3;
+    string brand = 4;
+    double price = 5;
+    string merchantId = 6;
+}
+
+service ProductService {
+    rpc AddProduct (NewProduct) returns (Product);
+}

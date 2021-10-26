@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/wisdommatt/ecommerce-microservice-product-service/internal/products"
@@ -51,6 +52,57 @@ func TestProductServiceImpl_AddProduct(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProductServiceImpl.AddProduct() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+		})
+	}
+}
+
+func TestProductServiceImpl_GetProduct(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		sku string
+	}
+	tests := []struct {
+		name                    string
+		args                    args
+		repoGetProductBySKUFunc func(ctx context.Context, sku string) (*products.Product, error)
+		want                    *products.Product
+		wantErr                 bool
+	}{
+		{
+			name:    "empty sku",
+			args:    args{sku: ""},
+			wantErr: true,
+		},
+		{
+			name: "GetProductBySKU repository implementation with error",
+			args: args{sku: "sku.111222"},
+			repoGetProductBySKUFunc: func(ctx context.Context, sku string) (*products.Product, error) {
+				return nil, errors.New("an error occured while finding product")
+			},
+			wantErr: true,
+		},
+		{
+			name: "GetProductBySKU repository implementation without error",
+			args: args{sku: "sku.222333"},
+			repoGetProductBySKUFunc: func(ctx context.Context, sku string) (*products.Product, error) {
+				return &products.Product{Name: "Apple Watch", Price: 1999288}, nil
+			},
+			want: &products.Product{Name: "Apple Watch", Price: 1999288},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewProductService(&productmock.RepositoryMock{
+				GetProductBySKUFunc: tt.repoGetProductBySKUFunc,
+			})
+			got, err := s.GetProduct(tt.args.ctx, tt.args.sku)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ProductServiceImpl.GetProduct() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ProductServiceImpl.GetProduct() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -20,6 +20,11 @@ message NewProduct {
     string merchantId = 6;
 }
 
+message GetProductInput {
+    string sku = 1;
+}
+
 service ProductService {
     rpc AddProduct (NewProduct) returns (Product);
+    rpc GetProduct(GetProductInput) returns (Product);
 }

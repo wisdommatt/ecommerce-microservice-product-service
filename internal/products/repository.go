@@ -15,6 +15,7 @@ import (
 // object.
 type Repository interface {
 	SaveProduct(ctx context.Context, product *Product) error
+	GetProductBySKU(ctx context.Context, sku string) (*Product, error)
 }
 
 // ProductRepo is the default implementation for Repository inteface.
@@ -52,4 +53,19 @@ func (r *ProductRepo) SaveProduct(ctx context.Context, product *Product) error {
 		return err
 	}
 	return nil
+}
+
+func (r *ProductRepo) GetProductBySKU(ctx context.Context, sku string) (*Product, error) {
+	span := r.tracer.StartSpan("GetProductBySKU", opentracing.ChildOf(opentracing.SpanFromContext(ctx).Context()))
+	defer span.Finish()
+	r.setMySqlComponentTags(span, "products")
+	span.SetTag("param.sku", sku)
+	product := &Product{}
+	err := r.db.Where("sku = ?", sku).First(product).Error
+	if err != nil {
+		ext.Error.Set(span, true)
+		span.LogFields(log.Error(err), log.Event("gorm.db.Where.First"))
+		return nil, err
+	}
+	return product, nil
 }

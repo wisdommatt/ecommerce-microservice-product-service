@@ -34,3 +34,15 @@ func (s *ProductServer) AddProduct(ctx context.Context, req *proto.NewProduct) (
 	}
 	return InternalProductToProto(newProduct), nil
 }
+
+func (s *ProductServer) GetProduct(ctx context.Context, input *proto.GetProductInput) (*proto.Product, error) {
+	span := opentracing.StartSpan("GetProduct")
+	defer span.Finish()
+
+	ctx = opentracing.ContextWithSpan(ctx, span)
+	product, err := s.productService.GetProduct(ctx, input.Sku)
+	if err != nil {
+		return nil, err
+	}
+	return InternalProductToProto(product), nil
+}

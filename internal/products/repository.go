@@ -67,5 +67,6 @@ func (r *ProductRepo) GetProductBySKU(ctx context.Context, sku string) (*Product
 		span.LogFields(log.Error(err), log.Event("gorm.db.Where.First"))
 		return nil, err
 	}
+	span.SetTag("response.product", product)
 	return product, nil
 }

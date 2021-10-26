@@ -10,6 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
+	"github.com/wisdommatt/ecommerce-microservice-product-service/grpc/proto"
+	servers "github.com/wisdommatt/ecommerce-microservice-product-service/grpc/service-servers"
+	"github.com/wisdommatt/ecommerce-microservice-product-service/internal/products"
+	"github.com/wisdommatt/ecommerce-microservice-product-service/services"
 	"google.golang.org/grpc"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -23,19 +27,28 @@ func main() {
 
 	mustLoadDotenv(log)
 
-	_, err := gorm.Open(mysql.Open(os.Getenv("MYSQL_CONNECTION")), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(os.Getenv("MYSQL_CONNECTION")), &gorm.Config{})
 	if err != nil {
 		log.WithError(err).Fatal("failed to connect database", os.Getenv("MYSQL_CONNECTION"))
 	}
+	db.AutoMigrate(&products.Product{})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "2424"
 	}
+	tracer := initTracer("product-service")
+	opentracing.SetGlobalTracer(tracer)
+
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.WithError(err).WithField("port", port).Fatal("an error occured while listening to tcp conn")
 	}
+	productRepo := products.NewRepository(db, initTracer("mysql"))
+	productService := services.NewProductService(productRepo)
+
 	grpcServer := grpc.NewServer()
+	proto.RegisterProductServiceServer(grpcServer, servers.NewProductServer(productService))
 	log.WithField("port", port).Info("app running")
 	grpcServer.Serve(lis)
 }

@@ -1,11 +1,14 @@
 package products
 
+import "time"
+
 type Product struct {
-	ID          int     `json:"_" gorm:"autoIncrement,primaryKey"`
-	Sku         string  `json:"sku,omitempty"`
-	Name        string  `json:"name,omitempty"`
-	Description string  `json:"description,omitempty"`
-	Category    string  `json:"category,omitempty"`
-	Brand       string  `json:"brand,omitempty"`
-	Price       float64 `json:"price,omitempty"`
+	ID          int       `json:"_" gorm:"autoIncrement,primaryKey"`
+	Sku         string    `json:"sku"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Category    string    `json:"category"`
+	Brand       string    `json:"brand"`
+	Price       float64   `json:"price"`
+	TimeAdded   time.Time `json:"timeAdded"`
 }

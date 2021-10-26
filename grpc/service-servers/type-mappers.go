@@ -12,6 +12,7 @@ func ProtoNewProductToInternal(newProduct *proto.NewProduct) *products.Product {
 		Category:    newProduct.Category,
 		Brand:       newProduct.Brand,
 		Price:       newProduct.Price,
+		ImageURL:    newProduct.ImageUrl,
 	}
 }
 
@@ -23,5 +24,6 @@ func InternalProductToProto(product *products.Product) *proto.Product {
 		Category:    product.Category,
 		Brand:       product.Brand,
 		Price:       product.Price,
+		ImageUrl:    product.ImageURL,
 	}
 }

@@ -8,7 +8,9 @@ type Product struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Category    string    `json:"category"`
+	MerchantID  string    `json:"merchantId"`
 	Brand       string    `json:"brand"`
 	Price       float64   `json:"price"`
+	ImageURL    string    `json:"imageUrl"`
 	TimeAdded   time.Time `json:"timeAdded"`
 }

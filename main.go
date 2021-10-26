@@ -44,8 +44,15 @@ func main() {
 	if err != nil {
 		log.WithError(err).WithField("port", port).Fatal("an error occured while listening to tcp conn")
 	}
+
+	userServiceConn, err := grpc.Dial(os.Getenv("USER_SERVICE_ADDR"), grpc.WithInsecure())
+	if err != nil {
+		log.WithField("userServiceAddr", os.Getenv("USER_SERVICE_ADDR")).WithError(err).
+			Fatal("an error occured while connecting to user service")
+	}
+	userServiceClient := proto.NewUserServiceClient(userServiceConn)
 	productRepo := products.NewRepository(db, initTracer("mysql"))
-	productService := services.NewProductService(productRepo)
+	productService := services.NewProductService(productRepo, userServiceClient)
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterProductServiceServer(grpcServer, servers.NewProductServer(productService))

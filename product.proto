@@ -9,6 +9,8 @@ message Product {
     string category = 4;
     string brand = 5;
     double price = 6;
+    string imageUrl = 7;
+    string merchantId = 8;
 }
 
 message NewProduct {
@@ -17,7 +19,7 @@ message NewProduct {
     string category = 3;
     string brand = 4;
     double price = 5;
-    string merchantId = 6;
+    string imageUrl = 6;
 }
 
 message GetProductInput {

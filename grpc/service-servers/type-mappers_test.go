@@ -84,6 +84,7 @@ func TestInternalProductToProto(t *testing.T) {
 				Category:    "Fashion",
 				Brand:       "Addidas",
 				Price:       9009999,
+				MerchantID:  "helloWooo",
 			}},
 			want: &proto.Product{
 				Name:        "Blue Canvas",
@@ -92,6 +93,7 @@ func TestInternalProductToProto(t *testing.T) {
 				Category:    "Fashion",
 				Brand:       "Addidas",
 				Price:       9009999,
+				MerchantId:  "helloWooo",
 			},
 		},
 	}

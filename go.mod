@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/joho/godotenv v1.4.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
@@ -12,4 +13,6 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
+	gorm.io/driver/mysql v1.1.2
+	gorm.io/gorm v1.21.16
 )

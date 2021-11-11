@@ -14,4 +14,4 @@ watch:
 
 gen-mocks:
 	go get github.com/vektra/mockery/v2/.../
-	mockery --all
+	mockery --all --case underscore

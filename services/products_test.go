@@ -6,59 +6,94 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/wisdommatt/ecommerce-microservice-product-service/grpc/proto"
 	"github.com/wisdommatt/ecommerce-microservice-product-service/internal/products"
+	"github.com/wisdommatt/ecommerce-microservice-product-service/mocks"
 	productmock "github.com/wisdommatt/ecommerce-microservice-product-service/test/mocks/products"
 )
 
-// test will be resolved when mocks are replaced with the one generated
-// by mockery.
+func TestProductServiceImpl_AddProduct(t *testing.T) {
+	productRepo := &mocks.Repository{}
+	productRepo.On("SaveProduct", mock.Anything, &products.Product{
+		Sku:        "123456",
+		Name:       "Product 1",
+		Price:      10000,
+		MerchantID: "valid.user",
+	}).Return(errors.New("an error occured"))
 
-// func TestProductServiceImpl_AddProduct(t *testing.T) {
-// 	type args struct {
-// 		newProduct *products.Product
-// 	}
-// 	tests := []struct {
-// 		name                string
-// 		args                args
-// 		repoSaveProductFunc func(ctx context.Context, product *products.Product) error
-// 		wantErr             bool
-// 	}{
-// 		{
-// 			name: "SaveProduct repository implementation with error",
-// 			args: args{newProduct: &products.Product{
-// 				Name:        "Yellow Speaker",
-// 				Description: "Speaker with yellow sounds",
-// 			}},
-// 			repoSaveProductFunc: func(ctx context.Context, product *products.Product) error {
-// 				return errors.New("an error occured while saving product")
-// 			},
-// 			wantErr: true,
-// 		},
-// 		{
-// 			name: "SaveProduct repository implementation without error",
-// 			args: args{newProduct: &products.Product{
-// 				Name:        "Green Speaker",
-// 				Description: "Speaker with green charger",
-// 				Price:       10009999,
-// 			}},
-// 			repoSaveProductFunc: func(ctx context.Context, product *products.Product) error {
-// 				return nil
-// 			},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			s := NewProductService(&productmock.RepositoryMock{
-// 				SaveProductFunc: tt.repoSaveProductFunc,
-// 			})
-// 			_, err := s.AddProduct(context.TODO(), tt.args.newProduct)
-// 			if (err != nil) != tt.wantErr {
-// 				t.Errorf("ProductServiceImpl.AddProduct() error = %v, wantErr %v", err, tt.wantErr)
-// 				return
-// 			}
-// 		})
-// 	}
-// }
+	productRepo.On("SaveProduct", mock.Anything, &products.Product{
+		Sku:        "123456",
+		Name:       "Product 2",
+		Price:      15000,
+		MerchantID: "valid.user",
+	}).Return(nil)
+
+	userServiceClient := &mocks.UserServiceClient{}
+	userServiceClient.On("GetUserFromJWT", mock.Anything, &proto.GetUserFromJWTInput{JwtToken: "invalidJwt"}).
+		Return(nil, errors.New("invalid jwt"))
+
+	userServiceClient.On("GetUserFromJWT", mock.Anything, &proto.GetUserFromJWTInput{JwtToken: "validJwt"}).
+		Return(&proto.GetUserFromJWTResponse{
+			User: &proto.User{
+				Id:       "valid.user",
+				FullName: "Valid User",
+			},
+		}, nil)
+
+	type args struct {
+		jwtToken   string
+		newProduct *products.Product
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *products.Product
+		wantErr bool
+	}{
+		{
+			name:    "invalid jwt token",
+			args:    args{jwtToken: "invalidJwt", newProduct: nil},
+			wantErr: true,
+		},
+		{
+			name: "SaveProduct repo implementation with error",
+			args: args{jwtToken: "validJwt", newProduct: &products.Product{
+				Sku:   "123456",
+				Name:  "Product 1",
+				Price: 10000,
+			}},
+			wantErr: true,
+		},
+		{
+			name: "SaveProduct repo implementation without error",
+			args: args{jwtToken: "validJwt", newProduct: &products.Product{
+				Sku:   "123456",
+				Name:  "Product 2",
+				Price: 15000,
+			}},
+			want: &products.Product{
+				Sku:        "123456",
+				Name:       "Product 2",
+				Price:      15000,
+				MerchantID: "valid.user",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewProductService(productRepo, userServiceClient)
+			got, err := s.AddProduct(context.Background(), tt.args.jwtToken, tt.args.newProduct)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ProductServiceImpl.AddProduct() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ProductServiceImpl.AddProduct() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestProductServiceImpl_GetProduct(t *testing.T) {
 	type args struct {

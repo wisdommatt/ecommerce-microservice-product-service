@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/nats-io/nats.go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"github.com/uber/jaeger-client-go"
@@ -33,6 +34,13 @@ func main() {
 	}
 	db.AutoMigrate(&products.Product{})
 
+	natsConn, err := nats.Connect(os.Getenv("NATS_URI"))
+	if err != nil {
+		log.WithField("nats_uri", os.Getenv("NATS_URI")).WithError(err).
+			Error("an error occured while connecting to nats")
+	}
+	defer natsConn.Close()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "2424"
@@ -52,7 +60,7 @@ func main() {
 	}
 	userServiceClient := proto.NewUserServiceClient(userServiceConn)
 	productRepo := products.NewRepository(db, initTracer("mysql"))
-	productService := services.NewProductService(productRepo, userServiceClient)
+	productService := services.NewProductService(productRepo, userServiceClient, natsConn)
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterProductServiceServer(grpcServer, servers.NewProductServer(productService))

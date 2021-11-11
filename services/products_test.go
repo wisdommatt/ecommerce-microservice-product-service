@@ -81,7 +81,7 @@ func TestProductServiceImpl_AddProduct(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewProductService(productRepo, userServiceClient)
+			s := NewProductService(productRepo, userServiceClient, nil)
 			got, err := s.AddProduct(context.Background(), tt.args.jwtToken, tt.args.newProduct)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProductServiceImpl.AddProduct() error = %v, wantErr %v", err, tt.wantErr)
@@ -129,7 +129,7 @@ func TestProductServiceImpl_GetProduct(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewProductService(productRepo, nil)
+			s := NewProductService(productRepo, nil, nil)
 			got, err := s.GetProduct(context.Background(), tt.args.sku)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProductServiceImpl.GetProduct() error = %v, wantErr %v", err, tt.wantErr)

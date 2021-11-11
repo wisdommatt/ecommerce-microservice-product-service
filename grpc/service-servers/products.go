@@ -37,6 +37,11 @@ func (s *ProductServer) AddProduct(ctx context.Context, req *proto.NewProduct) (
 		return nil, errors.New("no metadata sent, please try again later")
 	}
 	jwtToken := extractAuthorizationFromMetaData(metaData)
+	if jwtToken == "" {
+		ext.Error.Set(span, true)
+		span.LogFields(log.Error(errors.New("no authorization token in metadata")))
+		return nil, errors.New("no authorization token found in metadata")
+	}
 	ctx = opentracing.ContextWithSpan(ctx, span)
 	newProduct, err := s.productService.AddProduct(ctx, jwtToken, ProtoNewProductToInternal(req))
 	if err != nil {

@@ -8,6 +8,8 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/nats-io/nats-server/v2 v2.6.4 // indirect
 	github.com/nats-io/nats.go v1.13.1-0.20211018182449-f2416a8b1483
+	github.com/nats-io/not.go v0.0.0-20200622173954-4685a9163025 // indirect
+	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
@@ -15,7 +17,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
-	github.com/vektra/mockery/v2 v2.9.4 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20211108221036-ceb1ce70b4fa // indirect
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110

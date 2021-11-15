@@ -7,6 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
+	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"github.com/uber/jaeger-client-go"
@@ -60,9 +61,12 @@ func main() {
 	}
 	userServiceClient := proto.NewUserServiceClient(userServiceConn)
 	productRepo := products.NewRepository(db, initTracer("mysql"))
-	productService := services.NewProductService(productRepo, userServiceClient, natsConn)
+	productService := services.NewProductService(productRepo, userServiceClient, natsConn, initTracer("product.ServiceHandlers"))
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(otgrpc.OpenTracingServerInterceptor(tracer)),
+		grpc.StreamInterceptor(otgrpc.OpenTracingStreamServerInterceptor(tracer)),
+	)
 	proto.RegisterProductServiceServer(grpcServer, servers.NewProductServer(productService))
 	log.WithField("port", port).Info("app running")
 	grpcServer.Serve(lis)

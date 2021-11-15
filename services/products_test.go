@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/mock"
 	"github.com/wisdommatt/ecommerce-microservice-product-service/grpc/proto"
 	"github.com/wisdommatt/ecommerce-microservice-product-service/internal/products"
@@ -81,7 +82,7 @@ func TestProductServiceImpl_AddProduct(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewProductService(productRepo, userServiceClient, nil)
+			s := NewProductService(productRepo, userServiceClient, nil, &opentracing.NoopTracer{})
 			got, err := s.AddProduct(context.Background(), tt.args.jwtToken, tt.args.newProduct)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProductServiceImpl.AddProduct() error = %v, wantErr %v", err, tt.wantErr)
@@ -129,7 +130,7 @@ func TestProductServiceImpl_GetProduct(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewProductService(productRepo, nil, nil)
+			s := NewProductService(productRepo, nil, nil, &opentracing.NoopTracer{})
 			got, err := s.GetProduct(context.Background(), tt.args.sku)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProductServiceImpl.GetProduct() error = %v, wantErr %v", err, tt.wantErr)

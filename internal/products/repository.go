@@ -42,10 +42,14 @@ func (r *ProductRepo) setMySqlComponentTags(span opentracing.Span, tableName str
 func (r *ProductRepo) SaveProduct(ctx context.Context, product *Product) error {
 	product.Sku = uuid.NewString()
 	product.TimeAdded = time.Now()
-	span := r.tracer.StartSpan("SaveProduct", opentracing.ChildOf(opentracing.SpanFromContext(ctx).Context()))
+
+	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, r.tracer, "SaveProduct")
 	defer span.Finish()
 	r.setMySqlComponentTags(span, "products")
-	span.SetTag("param.product", product)
+	span.LogFields(
+		log.Object("param.product", product),
+	)
+
 	err := r.db.Create(product).Error
 	if err != nil {
 		ext.Error.Set(span, true)
@@ -56,10 +60,11 @@ func (r *ProductRepo) SaveProduct(ctx context.Context, product *Product) error {
 }
 
 func (r *ProductRepo) GetProductBySKU(ctx context.Context, sku string) (*Product, error) {
-	span := r.tracer.StartSpan("GetProductBySKU", opentracing.ChildOf(opentracing.SpanFromContext(ctx).Context()))
+	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, r.tracer, "GetProductBySKU")
 	defer span.Finish()
 	r.setMySqlComponentTags(span, "products")
 	span.SetTag("param.sku", sku)
+
 	product := &Product{}
 	err := r.db.Where("sku = ?", sku).First(product).Error
 	if err != nil {

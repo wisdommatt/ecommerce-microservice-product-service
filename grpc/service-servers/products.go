@@ -25,7 +25,7 @@ func NewProductServer(productService services.ProductService) *ProductServer {
 }
 
 func (s *ProductServer) AddProduct(ctx context.Context, req *proto.NewProduct) (*proto.Product, error) {
-	span := opentracing.StartSpan("AddProduct")
+	span, _ := opentracing.StartSpanFromContext(ctx, "AddProduct")
 	defer span.Finish()
 	ext.SpanKindRPCServer.Set(span)
 	span.SetTag("request.body", req)
@@ -51,7 +51,7 @@ func (s *ProductServer) AddProduct(ctx context.Context, req *proto.NewProduct) (
 }
 
 func (s *ProductServer) GetProduct(ctx context.Context, input *proto.GetProductInput) (*proto.Product, error) {
-	span := opentracing.StartSpan("GetProduct")
+	span, _ := opentracing.StartSpanFromContext(ctx, "GetProduct")
 	defer span.Finish()
 	ext.SpanKindRPCServer.Set(span)
 	span.SetTag("param.input", input)

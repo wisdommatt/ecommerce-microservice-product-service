@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/not.go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
@@ -26,24 +27,28 @@ type ProductServiceImpl struct {
 	productRepo       products.Repository
 	userServiceClient proto.UserServiceClient
 	natsConn          *nats.Conn
+	tracer            opentracing.Tracer
 }
 
 // NewProductService returns a new product service object.
 func NewProductService(
-	productRepo products.Repository, userServiceClient proto.UserServiceClient, natsConn *nats.Conn,
+	productRepo products.Repository,
+	userServiceClient proto.UserServiceClient,
+	natsConn *nats.Conn,
+	tracer opentracing.Tracer,
 ) *ProductServiceImpl {
 	return &ProductServiceImpl{
 		productRepo:       productRepo,
 		userServiceClient: userServiceClient,
 		natsConn:          natsConn,
+		tracer:            tracer,
 	}
 }
 
 func (s *ProductServiceImpl) AddProduct(ctx context.Context, jwtToken string, newProduct *products.Product) (*products.Product, error) {
-	span := opentracing.SpanFromContext(ctx)
-	if span == nil {
-		span = opentracing.StartSpan("service.GetUsers")
-	}
+	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, s.tracer, "GetUsers")
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	userResponse, err := s.userServiceClient.GetUserFromJWT(ctx, &proto.GetUserFromJWTInput{JwtToken: jwtToken})
 	if err != nil {
 		ext.Error.Set(span, true)
@@ -74,14 +79,26 @@ func (s *ProductServiceImpl) publishProductAddedEmailEvent(span opentracing.Span
 			"productDescription": product.Description,
 		},
 	}
+	var traceMsg not.TraceMsg
+	err := s.tracer.Inject(span.Context(), opentracing.Binary, &traceMsg)
+	if err != nil {
+		ext.Error.Set(span, true)
+		span.LogFields(
+			log.Error(err),
+			log.Event("injecting trace message to tracer"),
+		)
+		return
+	}
 	natsMessageJSON, err := json.Marshal(natsMessage)
 	if err != nil {
 		ext.Error.Set(span, true)
 		span.LogFields(log.Error(err), log.Event("converting object to json"), log.Object("object", natsMessage))
 		return
 	}
-	span.LogFields(log.String("nats.message", string(natsMessageJSON)))
-	err = s.natsConn.Publish("notification.SendProductAddedEmail", natsMessageJSON)
+	traceMsg.Write(natsMessageJSON)
+
+	span.LogFields(log.String("nats.message", traceMsg.String()))
+	err = s.natsConn.Publish("notification.SendProductAddedEmail", traceMsg.Bytes())
 	if err != nil {
 		ext.Error.Set(span, true)
 		span.LogFields(log.Error(err), log.Event("nats.notification.SendProductAddedEmail"))
@@ -89,6 +106,9 @@ func (s *ProductServiceImpl) publishProductAddedEmailEvent(span opentracing.Span
 }
 
 func (s *ProductServiceImpl) GetProduct(ctx context.Context, sku string) (*products.Product, error) {
+	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, s.tracer, "GetProduct")
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	if sku == "" {
 		return nil, errors.New("sku must be provided")
 	}
